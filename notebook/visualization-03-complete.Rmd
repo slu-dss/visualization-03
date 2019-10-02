@@ -1,0 +1,338 @@
+---
+title: "Visualization 03 - The Magic of Aesthetics"
+author: "Yujie Su, M.S. & Matthew Schuelke, Ph.D."
+date: '(`r format(Sys.time(), "%B %d, %Y")`)'
+output:
+  github_document: default
+  html_notebook: default
+---
+
+## Introduction
+
+Aesthetic mappings are the cornerstone of the grammar of graphics plotting framework. This is where the magic happens - converting continuous and categorical data into visual scales that provide access to a large amount of information in a very short time. Today you will explore how to define aesthetic mappings for your data.
+
+This time we will use a new data set "Cars-Mpg Data". This data set was taken from the StatLib library which is maintained at Carnegie Mellon University. The data set focus is city-cycle fuel consumption in miles per gallon, to be predicted in terms of 2 multi-valued discrete and 5 continuous attributes. It was pulled from UC Irvine Machine Learning Repository (https://archive.ics.uci.edu/ml/data sets/auto+mpg)
+
+## Load Dependencies
+
+The following code loads some package dependencies for our analyses:
+
+```{r package-load-1}
+library(here)    # working with files
+library(readr)   # work with csv files
+library(dplyr)   # data wrangling
+```
+
+Now you try loading three additional packages:
+
+* `ggplot2` (for making visualizations),
+* `cowplot` (an add-on to ggplot), and a new package 
+* `skimr` (for generating descriptive statistics):
+
+```{r package-load-2}
+library(ggplot2)
+library(cowplot)
+library(skimr)
+```
+
+We now have the packages needed for our analyses.
+
+## Load Data
+
+```{r}
+cars <- read_csv(here("data", "autocar.csv"))
+print(cars)
+```
+
+Now you try to load the "house.csv" data file.
+
+```{r practice-1}
+house <- read_csv(here("data", "house.csv"))
+print(house)
+```
+
+## Clean Data
+
+First let's summarize our data set and see if we need to manipulate any variables data.
+
+```{r}
+skim(cars)
+```
+
+Variables `origin`, `cyl`, and `model_year` should be categorical data,  let's transform them all into factors.
+
+```{r}
+cars <- cars %>%
+  mutate(origin = as.factor(origin),
+         cyl = as.factor(cyl),
+         model_year = as.factor(model_year))
+
+skim(cars)
+```
+
+Now you try to summarize the house data set use function `skim()`. Are there any variables which should be transformed? 
+
+```{r practice-2a}
+skim(house)
+```
+
+```{r practice-2b}
+house <- house %>% 
+  mutate(Id = as.factor(Id), 
+         Year = as.factor(Year))
+
+skim(house)
+```
+
+
+## Attributes 
+
+Typically, we understand aesthetics as describing how something looks, for example, its color, size, or shape. However, for ggplot2, this is not entirely how the term is used.
+
+```{r}
+p <- ggplot(cars, aes(x = weight, y = mpg))
+
+p1 <- p + geom_point(color = 'red')
+p2 <- p + geom_point(shape = 4)
+p3 <- p + geom_point(size = 1)
+plot_grid(p1, p2, p3)
+```
+
+You try to create plots using the house data set. Plot `SalePrice` against `Area`, and set the dot color to blue, shape to 3, size to 3. 
+
+```{r practice-3}
+# create a ggplot2 object with Area mapped to the X axis, and SalePrice to the Y axis.
+p <- ggplot(house, aes(x = Area, y = SalePrice))
+
+# Make a scatter plot using the above object, and set point color to blue, shape to 21, and size to 2.
+p + geom_point(color = 'blue', shape = 21, size = 2)
+```
+
+## Aesthetics 
+
+In ggplot aesthetics do not just refer to how something looks, but also includes the idea of "mapping" (i.e., which variable goes with each attribute). When we need to create multivariate plots, we can use aesthetics to maximize the number of variables displayed in a plot.
+
+First we will focus on some visible aesthetics.
+
+*Mapping onto color*
+
+For example, the variable `cyl` can be mapped into color.
+
+```{r}
+ggplot(cars, aes(x = weight, 
+                 y = mpg, 
+                 color = cyl)) + 
+  geom_point()
+```
+
+Like the three plots we previously created, the `weight` variable is mapped onto the X axis and the `mpg` variable is mapped onto the Y axis. We already have two aesthetics for the two variables present. If we want to add a third variable, we can choose the color of the dots according to the `cyl`, that is, we map a variable from our data frame onto a visible aesthetic.
+
+Now you again plot `SalePrice` against `Area`, but this time try to also map `Style` onto `color` using the house data set.
+
+```{r practice-4}
+ggplot(house, aes(x = Area, 
+                  y = SalePrice, 
+                  color = Style)) +
+  geom_point()
+```
+
+The framework of ggplot works by mapping a column in our data frame onto a visible aesthetic. That is why we made such a big deal about data structure in last time. If we have two variables in a single column or one variable split over several columns, we can still make a plot, but we may not be able to make the plot that we desire.
+
+The second thing to know is we call aesthetics in the `aes()` function, where attributes are called in geom layers. 
+
+Some common aesthetics include: 
+
+* `x` - X axis position 
+* `y` - Y axis position
+* `color` - Color of dots, outlines of other shapes
+* `fill` - fill color
+* `size` - diameter of points, thickness of lines
+* `alpha` - transparency
+* `linetype` - line dash pattern
+* `labels` - text on a plot or axes
+* `shape` - shape of point
+
+Many of these aesthetics function as both aesthetic mappings as well as attributes.
+
+*Mapping onto fill*
+
+The `color` aesthetic typically changes the outside outline of an object and the `fill` aesthetic is typically the inside shading. However, as you saw in the last exercise, geom_point() is an exception.
+
+That is, `fill` is typically for inside shading:
+
+```{r}
+ggplot(cars, aes(x = cyl,  fill = origin)) + 
+  geom_bar(stat = 'count')
+```
+
+Here you repeat the example but now remove the `fill` mapping and instead try to map `origin` onto `color`.
+
+```{r practice-5}
+ggplot(cars, aes(x = cyl,  color = origin)) + 
+  geom_bar(stat = 'count')
+```
+
+Whereas `color` is for outside outlines.
+
+### Mapping onto alpha
+
+Legal `alpha` values are any numbers from 0 (transparent) to 1 (opaque). The default `alpha` value usually is 1.
+
+```{r}
+ggplot(cars, aes(x = weight, y = mpg, alpha = displacement)) + 
+  geom_point()
+```
+
+Now you repeat the example but this time try to map `horsepower` onto `alpha`.
+
+```{r practice-6}
+ggplot(cars, aes(x = weight, y = mpg, alpha = horsepower)) + 
+  geom_point()
+```
+
+## Modifying Aesthetics
+
+Now we know what aesthetics are and have some idea about choosing them appropriately. Let's explore how to modify them.
+
+*Position*
+
+Position specifies how ggplot will adjust for overlapping bars or points in a single layer. 
+
+The most straightforward `position` is `identity`, which we've already seen. It's the default position in our scatter plot. Identity means that the value in the data frame is exactly where the value will be positioned in the plot. We could write it explicitly, but it's not necessary. 
+
+Positions:
+
+* identity
+* dodge 
+* stack
+* fill
+* jitter
+* jitterdodge
+
+Here is a scatter plot of `horsepower` against `mpg`.
+
+```{r}
+ggplot(cars, aes(x = horsepower, y = mpg)) + 
+  geom_point()
+```
+
+We have overlapping points in the previous plot. To address this, we could add some random noise on both the x and y axes to see regions of high density, which is referred to as "jittering".
+
+```{r}
+ggplot(cars, aes(x = horsepower, y = mpg)) +
+  geom_point(position = "jitter")
+```
+
+Jitter can be used as an argument, but each position type can also be accessed as a function.
+
+For example, `position` equals "jitter" can be defined in a function before we call our plot. This has two advantages,  
+
+* We can set specific arguments for the position, such as the width, which defines how much random noise should be added.
+* and it allows us to make use of this parameter throughout our plotting functions so that we can maintain consistency across plots. This is available for all position attributes.
+
+```{r}
+posn.j <- position_jitter(width = 0.1)
+
+ggplot(cars, aes(x = horsepower, 
+                 y = mpg, 
+                 color = cyl)) +
+  geom_point(position = posn.j)
+```
+
+Now you try to create a scatter plot to show `mpg` as a function of `acceleration`, and map `origin` on the `color` aesthetic. Also, set the point `position` to "jitter".
+
+```{r practice-7}
+ggplot(cars, aes(x = acceleration, y = mpg, color = origin)) + 
+  geom_point(position = "jitter")
+```
+
+Here is a reminder of a previous bar plot we made which showed observation counts of `origin` within each `cyl` category.
+
+```{r}
+ggplot(cars, aes(x = cyl,  fill = origin)) + 
+  geom_bar(stat = "count") 
+```
+
+For this plot, we could instead set the `position` to "dodge" as follows:
+
+```{r}
+ggplot(cars, aes(x = cyl,  fill = origin)) + 
+  geom_bar(stat = "count", position = "dodge") 
+```
+
+## Scales Functions
+
+Recall that each of the aesthetics is a scale which we mapped data onto, so color is just a scale, like x and y are scales. We can access all the scales with the "scale underscore functions" (e.g., `scale_x_continuous()` or `scale_fill_manual()`).
+
+The name between the underscores of a given scale function indicates which scale we wish to modify. All of the aesthetics we saw earlier have an associated scale function.
+
+The trailing word must match the type of data we are using. 
+
+Example Scale Functions:
+
+* scale_x_discrete()
+* scale_y_continuous()
+* scale_color...
+* scale_fill...
+* scale_color...
+* scale_shape...
+* scale_linetype...
+
+There are many arguments for the scale functions. The first argument is always the name or label of the scale. The next most common arguments are `limits`, `breaks` and `labels`.
+
+* `limits` define the scale upper and lower bounds
+* `breaks` manage the partitioning of a scale
+* `labels` control the displayed text for each category or break point
+
+### Names and labels
+
+```{r}
+ggplot(cars, aes(x = weight, y = mpg, color = cyl)) +
+  geom_point(position = "jitter") +
+  scale_x_continuous("Weight (kg)") +
+  scale_y_continuous("Miles per Gallon") + 
+  scale_color_discrete("Cylinder Number",
+                       labels = c("4 Cylinders", "6 Cylinders", "8 Cylinders"))
+```
+
+### Limits and breaks
+
+```{r}
+ggplot(cars, aes(x = weight, y = mpg, color = cyl)) +
+  geom_point(position = "jitter") +
+  scale_x_continuous("Weight (kg)", 
+                     limits = c(1000, 6000),
+                     breaks = seq(2000, 6000, 2000)) +
+  scale_y_continuous("Miles per Gallon", 
+                     limits = c(0, 150)) + 
+  scale_color_discrete("Cylinder Number",
+                       labels = c("4 Cylinders", "6 Cylinders", "8 Cylinders"))
+```
+
+Now it's your turn to modify some aesthetics.
+
+First create a scatter plot using the house data set. Map
+
+* `Area` to the X axis
+* `SalePrice` to the Y axis, and 
+* `Type` to the `color` scale
+
+Then
+
+* set the label on X axis to 'Area (ft*ft)'
+* set the label on Y axis to 'Sale Price (dollars)'
+* set `limits` on the Y axis to 0 and 500000 (this will clip two observations)
+* set the label of the color scale to 'Area Type'
+* set `labels` for the `breaks` in the `color` legend to "Ground Living Area" and "Lot Area"
+
+```{r practice-8}
+ggplot(house, aes(x = Area, 
+                  y = SalePrice, 
+                  color = Type)) +
+  geom_point() + 
+  scale_x_continuous("Area (ft*ft)") + 
+  scale_y_continuous("Sale Price (dollars)",
+                     limits = c(0, 500000)) + 
+  scale_color_discrete("Area Type", 
+                       labels = c("Ground Living Area", "Lot Area"))
+```
