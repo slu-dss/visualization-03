@@ -1,0 +1,83 @@
+---
+title: "Visualization 03 Challenge Complete"
+author: "Maya Gann-Bociek & Matthew Schuelke, Ph.D."
+date: '(`r format(Sys.time(), "%B %d, %Y")`)'
+output:
+  github_document: default
+  html_notebook: default
+---
+
+## Introduction
+
+We will continue to investigate NHANES data with "nhanes_c3.csv". 
+
+## Tasks
+
+1. Load the dependencies
+2. Load the dataset 'nhanes_c3.csv' into your environment
+3. Explore the data
+4. Plot the data
+
+## Load Dependencies
+
+The following code loads the package dependencies for our analysis:
+
+```{r package-load-1}
+# tidyverse packages
+library(dplyr)   
+library(tidyr)   
+library(ggplot2)  
+library(readr)    
+library(here)
+library(skimr)
+```
+
+We now have the packages needed for our analyses.
+
+## Load Data 
+
+Load in data "nhanes_c3.csv"
+
+```{r}
+nhanes <- read_csv(here('data', 'nhanes_c3.csv'))
+```
+
+## Explore the Data
+
+Print and summary the dataset to get familar with your data
+
+```{r}
+print(nhanes)
+skim(nhanes)
+```
+
+## Plotting
+
+Plot blood pressure ('BP') against 'ageMonths', in the following plotting aesthetics:
+
+* Map type to color 
+* Map gender to shape 
+
+```{r}
+ggplot(nhanes, aes(x = ageMonths, 
+                   y = BP, 
+                   color = type, 
+                   shape = gender)) +
+  geom_point()
+```
+
+Create a bar plot
+
+* display the number of person in each 'AgeDecade'
+* display the proportation of female and male with different colors
+
+```{r}
+ggplot(nhanes, aes(x = ageDecade, 
+                   fill = gender)) + 
+  geom_bar(stat = "count") +
+  labs(x = "Age Decade",
+       y = "Count") + 
+  scale_fill_discrete("Gender", 
+                      labels = c("Female", "Male"))
+  
+```
